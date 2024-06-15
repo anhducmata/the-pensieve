@@ -1,0 +1,12 @@
+**rephrasing question
+
+`{question}
+Given the above question, rephrase and expand it to help you do better answering. Maintain all information in the original question.
+`
+OR
+
+
+`(original) {question}
+(rephrased) {rephrased_question}
+Use your answer for the rephrased question to answer the original question.
+`
