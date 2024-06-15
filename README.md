@@ -8,6 +8,8 @@
 
 The Pensieve is an AI companion that helps you remember and explore your life experiences. It learns from your diary entries and allows you to ask questions about your life, providing a way to revisit your past and share memories with ease.
 
+The key of this application is RAg - Retrieval augmented generation
+
 ## Features
 
 - **Secure Storage**: Store your diary entries safely and privately.
