@@ -1,6 +1,4 @@
 {
-    "storage_type": "local",
-    "storage_location": "your_diary_entries.txt",
-    "cloud_storage_credentials": "path/to/your/cloud/credentials.json"
+    "pgvector_database_password": "password"
   }
   
