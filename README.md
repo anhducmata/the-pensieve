@@ -19,7 +19,10 @@ The Pensieve is an AI companion that helps you remember and explore your life ex
 
 ### Installation
 
-No installation required! The Pensieve is a web-based application (replace with your deployment method if different).
+* Install the pgvector
+`docker run --name pgvector-container-1 -p 5432:5432 -e POSTGRES_PASSWORD=password pgvector/pgvector:pg16`
+* Run the Flash app
+`flash run`
 
 ### Data Input
 
