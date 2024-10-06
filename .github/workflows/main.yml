@@ -5,9 +5,11 @@ jobs:
     runs-on: ubuntu-latest
     name: Comment on the changes in a PR
     steps:
-      # Step 1: Checkout the PR
+      # Step 1: Checkout the PR with full history
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch the entire history
 
       # Step 2: Fetch the list of changed files
       - name: Get list of changed files
