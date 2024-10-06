@@ -1,43 +1,46 @@
 on: pull_request
 
 jobs:
-  comment_on_changes:
+  comment_on_line_changes:
     runs-on: ubuntu-latest
-    name: Comment on the changes in a PR
+    name: Comment on specific lines in PR
     steps:
       # Step 1: Checkout the PR with full history
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Fetch the entire history
+          fetch-depth: 0  # Ensure we have the full git history
 
-      # Step 2: Fetch the list of changed files
-      - name: Get list of changed files
+      # Step 2: Get changed files
+      - name: Get changed files and lines
         id: changed_files
         run: |
-          files=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
-          echo "::set-output name=files::${files}"
+          git fetch origin
+          git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} > changed_files.txt
+          echo "::set-output name=files::$(cat changed_files.txt)"
 
-      # Step 3: Fetch the diff of changes
-      - name: Get diff of changes
-        id: diff
+      # Step 3: Comment on each changed file's diff (using GitHub API)
+      - name: Comment on PR changes
         run: |
-          diff=$(git diff --unified=0 ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
-          echo "::set-output name=diff::${diff}"
+          # Iterate over each file and post a comment for each line of change
+          while IFS= read -r file; do
+            # Get the diff for the file and extract line numbers
+            git diff --unified=0 ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} "$file" | grep '^@@' | while read -r hunk; do
+              # Extract starting line and line number details from the hunk metadata
+              START_LINE=$(echo "$hunk" | sed -n 's/^@@ -\([0-9]*\),.* +\([0-9]*\),.* @@.*/\2/p')
 
-      # Step 4: Comment on the PR with the changes
-      - name: Comment PR with changes
-        uses: thollander/actions-comment-pull-request@v2
-        with:
-          message: |
-            :wave: Hello! Here are the changes in this pull request:
-            
-            **Files changed:**
-            ```
-            ${{ steps.changed_files.outputs.files }}
-            ```
+              # Use GitHub's API to create a review comment on this line
+              COMMENT_BODY="This is a comment on line $START_LINE of file $file"
+              curl -s -X POST \
+                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                -H "Content-Type: application/json" \
+                -d "$(jq -n --arg body "$COMMENT_BODY" --arg path "$file" --argjson line $START_LINE \
+                  '{body: $body, path: $path, line: $line, side: "RIGHT"}')" \
+                "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments"
+            done
+          done < changed_files.txt
 
-            **Diff:**
-            ```
-            ${{ steps.diff.outputs.diff }}
-            ```
+      # This is an optional step to display the list of changed files in the logs for debugging purposes
+      - name: Show changed files
+        run: |
+          cat changed_files.txt
