@@ -1,15 +1,41 @@
 on: pull_request
 
 jobs:
-  example_comment_pr:
+  comment_on_changes:
     runs-on: ubuntu-latest
-    name: An example job to comment a PR
+    name: Comment on the changes in a PR
     steps:
+      # Step 1: Checkout the PR
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Comment PR
+      # Step 2: Fetch the list of changed files
+      - name: Get list of changed files
+        id: changed_files
+        run: |
+          files=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+          echo "::set-output name=files::${files}"
+
+      # Step 3: Fetch the diff of changes
+      - name: Get diff of changes
+        id: diff
+        run: |
+          diff=$(git diff --unified=0 ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+          echo "::set-output name=diff::${diff}"
+
+      # Step 4: Comment on the PR with the changes
+      - name: Comment PR with changes
         uses: thollander/actions-comment-pull-request@v2
         with:
           message: |
-            Hello world ! :wave:
+            :wave: Hello! Here are the changes in this pull request:
+            
+            **Files changed:**
+            ```
+            ${{ steps.changed_files.outputs.files }}
+            ```
+
+            **Diff:**
+            ```
+            ${{ steps.diff.outputs.diff }}
+            ```
